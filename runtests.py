@@ -42,14 +42,12 @@ if not settings.configured:
             'django.contrib.auth.middleware.AuthenticationMiddleware',
             'hunger.middleware.BetaMiddleware'
         ),
-        BETA_NEVER_ALLOW_VIEWS=['tests.views.never_allow'],
-        BETA_ALWAYS_ALLOW_VIEWS=[
+        HUNGER_REDIRECT='rejection',
+        HUNGER_ALWAYS_ALLOW_VIEWS=[
             'tests.views.always_allow',
+            'tests.views.rejection',
         ],
-        BETA_REDIRECT_URL='/',
-        BETA_ALWAYS_ALLOW_MODULES=['tests.always_allow_views'],
-        BETA_SIGNUP_VIEWS=['tests.views.signup'],
-        BETA_SIGNUP_CONFIRMATION_VIEW='tests.views.signup_confirmation',
+        HUNGER_ALWAYS_ALLOW_MODULES=['tests.always_allow_views'],
     )
 
 from django.test.simple import DjangoTestSuiteRunner
