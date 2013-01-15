@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.core.urlresolvers import reverse
+from django.core.urlresolvers import reverse, resolve
 from django.shortcuts import redirect
 from django.db.models import Q
 from hunger.models import InvitationCode, Invitation
@@ -61,6 +61,8 @@ class BetaMiddleware(object):
         short_name = view_func.__class__.__name__
         if short_name == 'function':
             short_name = view_func.__name__
+        view_name = self._get_view_name(request)
+
         full_view_name = '%s.%s' % (view_func.__module__, short_name)
 
         if self.always_allow_modules:
@@ -69,16 +71,19 @@ class BetaMiddleware(object):
         if '%s' % view_func.__module__ in whitelisted_modules:
             return
 
-        if full_view_name in self.always_allow_views:
+        if (full_view_name in self.always_allow_views or
+            view_name in self.always_allow_views):
             return
 
         if not request.user.is_authenticated():
             return redirect(self.redirect)
 
+        if request.user.is_staff:
+            return
+
         # Prevent queries by caching in_beta status in session
         if request.session.get('hunger_in_beta'):
             return
-
 
         cookie_code = request.COOKIES.get('hunger_code')
         invitations = Invitation.objects.filter(
@@ -154,3 +159,13 @@ class BetaMiddleware(object):
         if getattr(request, '_hunger_delete_cookie', False):
             response.delete_cookie('hunger_code')
         return response
+
+    @staticmethod
+    def _get_view_name(request):
+        """Return the urlpattern name."""
+        if hasattr(request, 'resolver_match'):
+            # Django >= 1.5
+            return request.resolver_match.view_name
+
+        match = resolve(request.path)
+        return match.url_name
